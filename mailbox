@@ -1,0 +1,28 @@
+#!/usr/bin/osascript
+
+on run argv
+	set MAIL_ACCOUNT to (system attribute "MAIL_ACCOUNT")
+	set PROJECTS_ROOT to "PROJECTS/"
+	
+	set projectCode to item 1 of argv
+	log "Creating a mailbox for " & projectCode
+	
+	tell application "Mail"
+		activate
+		
+		set newMailbox to PROJECTS_ROOT & projectCode
+		tell account MAIL_ACCOUNT to make new mailbox with properties {name:newMailbox}
+		
+		log "Creating a new mail rule...."
+		set newRule to make new rule at end of rules with properties {name:projectCode}
+		
+		tell newRule
+			set enabled to true
+			set should move message to true
+			set move message to (mailbox (newMailbox) of account MAIL_ACCOUNT)
+			
+			make new rule condition at beginning of rule conditions with properties ¬
+				{rule type:subject header, qualifier:does contain value, expression:projectCode}
+		end tell
+	end tell
+end run

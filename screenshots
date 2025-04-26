@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+set -e
+
+SCREENSHOT_DIRNAME="99_Screenshots"
+SCREENSHOT_BACKUP_DIRNAME="old"
+
+get_screenshot_directory() {
+	echo "$(defaults read com.apple.screencapture location)"
+}
+
+set_screeshot_directory() {
+	mkdir -p "$PWD/$SCREENSHOT_DIRNAME"
+	screenshot_dir="$(realpath "$SCREENSHOT_DIRNAME")"
+
+	defaults write com.apple.screencapture location "${screenshot_dir}"
+	dockutil --add "$screenshot_dir" --replacing "${SCREENSHOT_DIRNAME}"
+	echo "set up screenshot directory to $screenshot_dir"
+}
+
+backup_screenshots() {
+	screenshot_dir=$(realpath "$(get_screenshot_directory)")
+	mkdir -p "$screenshot_dir/$SCREENSHOT_BACKUP_DIRNAME"
+	backup_dir=$(realpath "${screenshot_dir}/${SCREENSHOT_BACKUP_DIRNAME}")
+
+	find "${screenshot_dir}" -type f -iname "*.png" -maxdepth 1 \
+		-exec cp "{}" "${backup_dir}" \;
+	echo "created backup to $backup_dir"
+}
+
+case "$1" in
+get) get_screenshot_directory ;;
+set) set_screeshot_directory ;;
+open) open "$(get_screenshot_directory)" ;;
+backup) backup_screenshots ;;
+*) echo -e "${RED}commands: open,set,backup" >&2 ;;
+esac
